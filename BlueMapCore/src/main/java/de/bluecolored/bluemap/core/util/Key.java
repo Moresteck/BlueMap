@@ -28,31 +28,30 @@ import de.bluecolored.bluemap.api.debug.DebugDump;
 
 @DebugDump
 public class Key {
-
-    private static final String MINECRAFT_NAMESPACE = "minecraft";
+    private static final String MINECRAFT_NAMESPACE = StringPool.intern("minecraft");
 
     private final String namespace;
     private final String value;
     private final String formatted;
 
     public Key(String formatted) {
-        String namespace = MINECRAFT_NAMESPACE;
-        String value = formatted;
-        int namespaceSeparator = formatted.indexOf(':');
-        if (namespaceSeparator > 0) {
-            namespace = formatted.substring(0, namespaceSeparator);
-            value = formatted.substring(namespaceSeparator + 1);
+        int separator = formatted.indexOf(':');
+        if (separator > 0) {
+            String namespace = formatted.substring(0, separator);
+            this.namespace = StringPool.intern(namespace);
+            this.value = StringPool.intern(formatted.substring(separator + 1));
+        } else {
+            this.namespace = MINECRAFT_NAMESPACE;
+            this.value = StringPool.intern(formatted);
         }
 
-        this.namespace = namespace.intern();
-        this.value = value.intern();
-        this.formatted = (this.namespace + ":" + this.value).intern();
+        this.formatted = StringPool.intern(this.namespace + ":" + this.value);
     }
 
     public Key(String namespace, String value) {
-        this.namespace = namespace.intern();
-        this.value = value.intern();
-        this.formatted = (this.namespace + ":" + this.value).intern();
+        this.namespace = StringPool.intern(namespace);
+        this.value = StringPool.intern(value);
+        this.formatted = StringPool.intern(this.namespace + ":" + this.value);
     }
 
     public String getNamespace() {

@@ -407,10 +407,8 @@ public class ChunkMcRegion extends MCRChunk {
 //            		String line4 = ((StringTag)tileentity.get("Text4")).getValue();
 //            	}
             }
-            
-            BlockState bstate = new BlockState(bid.getModernId(), metadataToProperties);
-            
-            return bstate;
+
+            return BlockState.of(bid.getModernId(), metadataToProperties);
         }
 
         public LightData getLightData(int x, int y, int z, LightData target) {

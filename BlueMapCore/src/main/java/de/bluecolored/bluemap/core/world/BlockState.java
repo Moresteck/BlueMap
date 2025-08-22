@@ -26,10 +26,12 @@ package de.bluecolored.bluemap.core.world;
 
 import de.bluecolored.bluemap.api.debug.DebugDump;
 import de.bluecolored.bluemap.core.util.Key;
+import de.bluecolored.bluemap.core.util.StringPool;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 import java.util.Map.Entry;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -41,7 +43,7 @@ import java.util.regex.Pattern;
  */
 @DebugDump
 public class BlockState extends Key {
-
+    private static final ConcurrentHashMap<String, BlockState> CACHE = new ConcurrentHashMap<>();
     private static final Pattern BLOCKSTATE_SERIALIZATION_PATTERN = Pattern.compile("^(.+?)(?:\\[(.*)])?$");
 
     public static final BlockState AIR = new BlockState("minecraft:air");
@@ -68,10 +70,7 @@ public class BlockState extends Key {
 
         //this.properties = Collections.unmodifiableMap(new HashMap<>(properties)); // <- not doing this to reduce object-creation
         this.properties = properties;
-        this.propertiesArray = properties.entrySet().stream()
-                .map(e -> new Property(e.getKey(), e.getValue()))
-                .sorted()
-                .toArray(Property[]::new);
+        this.propertiesArray = buildPropertiesArray(properties);
 
         // special fast-access properties
         this.isAir =
@@ -81,7 +80,31 @@ public class BlockState extends Key {
 
         this.isWater = "minecraft:water".equals(this.getFormatted());
         this.isWaterlogged = "true".equals(properties.get("waterlogged"));
+    }
 
+
+    public static BlockState of(String value, Map<String, String> properties) {
+        if (properties.isEmpty()) {
+            return CACHE.computeIfAbsent(value, k -> new BlockState(value, properties));
+        }
+
+        StringBuilder keyBuilder = new StringBuilder(value);
+
+        properties.entrySet().stream()
+                .sorted(Entry.comparingByKey())
+                .forEach(e -> keyBuilder.append(e.getKey()).append(e.getValue()));
+
+        return CACHE.computeIfAbsent(keyBuilder.toString(), k -> new BlockState(value, properties));
+    }
+
+    private Property[] buildPropertiesArray(Map<String, String> properties) {
+        Property[] array = new Property[properties.size()];
+        int index = 0;
+        for (Map.Entry<String, String> entry : properties.entrySet()) {
+            array[index++] = new Property(entry.getKey(), entry.getValue());
+        }
+        Arrays.sort(array);
+        return array;
     }
 
     /**
@@ -197,8 +220,8 @@ public class BlockState extends Key {
         private final String key, value;
 
         public Property(String key, String value) {
-            this.key = key.intern();
-            this.value = value.intern();
+            this.key = StringPool.intern(key);
+            this.value = StringPool.intern(value);
         }
 
         @SuppressWarnings("StringEquality")
