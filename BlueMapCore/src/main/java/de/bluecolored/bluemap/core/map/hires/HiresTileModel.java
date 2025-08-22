@@ -24,10 +24,9 @@
  */
 package de.bluecolored.bluemap.core.map.hires;
 
+import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.JsonGenerator;
 import com.flowpowered.math.TrigMath;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.stream.JsonWriter;
 import de.bluecolored.bluemap.core.util.InstancePool;
 import de.bluecolored.bluemap.core.util.MergeSort;
 import de.bluecolored.bluemap.core.util.math.MatrixM3f;
@@ -41,6 +40,7 @@ import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
 import java.util.UUID;
 
+@SuppressWarnings("UnusedReturnValue")
 public class HiresTileModel {
     private static final double GROW_MULTIPLIER = 1.5;
 
@@ -395,18 +395,21 @@ public class HiresTileModel {
     }
 
     public void writeBufferGeometryJson(OutputStream out) throws IOException {
-        Gson gson = new GsonBuilder().create();
-        JsonWriter json = gson.newJsonWriter(new BufferedWriter(new OutputStreamWriter(out, StandardCharsets.UTF_8), 81920));
+        JsonFactory factory = new JsonFactory();
+        JsonGenerator json = factory.createGenerator(new BufferedWriter(new OutputStreamWriter(out, StandardCharsets.UTF_8), 81920));
 
-        json.beginObject(); // main-object
-        json.name("tileGeometry").beginObject(); // tile-geometry-object
+        json.writeStartObject(); // main-object
+        json.writeFieldName("tileGeometry");
+        json.writeStartObject(); // tile-geometry-object
 
         // set special values
-        json.name("type").value("BufferGeometry");
-        json.name("uuid").value(UUID.randomUUID().toString().toUpperCase());
+        json.writeStringField("type", "BufferGeometry");
+        json.writeStringField("uuid", UUID.randomUUID().toString().toUpperCase());
 
-        json.name("data").beginObject(); // data
-        json.name("attributes").beginObject(); // attributes
+        json.writeFieldName("data");
+        json.writeStartObject(); // data
+        json.writeFieldName("attributes");
+        json.writeStartObject(); // attributes
 
         writePositionArray(json);
         writeNormalArray(json);
@@ -416,47 +419,49 @@ public class HiresTileModel {
         writeBlocklightArray(json);
         writeSunlightArray(json);
 
-        json.endObject(); // attributes
+        json.writeEndObject(); // attributes
 
         writeMaterialGroups(json);
 
-        json.endObject(); // data
-        json.endObject(); // tile-geometry-object
-        json.endObject(); // main-object
+        json.writeEndObject(); // data
+        json.writeEndObject(); // tile-geometry-object
+        json.writeEndObject(); // main-object
 
         // save and return
         json.flush();
+        json.close();
     }
 
-    private void writePositionArray(JsonWriter json) throws IOException {
-        json.name("position");
-        json.beginObject();
+    private void writePositionArray(JsonGenerator json) throws IOException {
+        json.writeFieldName("position");
+        json.writeStartObject();
 
-        json.name("type").value("Float32Array");
-        json.name("itemSize").value(3);
-        json.name("normalized").value(false);
+        json.writeStringField("type", "Float32Array");
+        json.writeNumberField("itemSize", 3);
+        json.writeBooleanField("normalized", false);
 
-        json.name("array").beginArray();
+        json.writeFieldName("array");
+        json.writeStartArray();
         int posSize = size * FI_POSITION;
         for (int i = 0; i < posSize; i++) {
             writeRounded(json, position[i]);
         }
-        json.endArray();
-        json.endObject();
+        json.writeEndArray();
+        json.writeEndObject();
     }
 
-    private void writeNormalArray(JsonWriter json) throws IOException {
+    private void writeNormalArray(JsonGenerator json) throws IOException {
         VectorM3f normal = new VectorM3f(0, 0, 0);
 
-        json.name("normal");
-        json.beginObject();
+        json.writeFieldName("normal");
+        json.writeStartObject();
 
-        json.name("type").value("Float32Array");
-        json.name("itemSize").value(3);
-        json.name("normalized").value(false);
+        json.writeStringField("type", "Float32Array");
+        json.writeNumberField("itemSize", 3);
+        json.writeBooleanField("normalized", false);
 
-        json.name("array").beginArray();
-
+        json.writeFieldName("array");
+        json.writeStartArray();
         int pi, i, j;
         for (i = 0; i < size; i++) {
             pi = i * FI_POSITION;
@@ -473,19 +478,20 @@ public class HiresTileModel {
                 writeRounded(json, normal.z);
             }
         }
-        json.endArray();
-        json.endObject();
+        json.writeEndArray();
+        json.writeEndObject();
     }
 
-    private void writeColorArray(JsonWriter json) throws IOException {
-        json.name("color");
-        json.beginObject();
+    private void writeColorArray(JsonGenerator json) throws IOException {
+        json.writeFieldName("color");
+        json.writeStartObject();
 
-        json.name("type").value("Float32Array");
-        json.name("itemSize").value(3);
-        json.name("normalized").value(false);
+        json.writeStringField("type", "Float32Array");
+        json.writeNumberField("itemSize", 3);
+        json.writeBooleanField("normalized", false);
 
-        json.name("array").beginArray();
+        json.writeFieldName("array");
+        json.writeStartArray();
         int colorSize = size * FI_COLOR, i, j;
         for (i = 0; i < colorSize; i += 3) {
             for (j = 0; j < 3; j++) {
@@ -494,123 +500,128 @@ public class HiresTileModel {
                 writeRounded(json, color[i + 2]);
             }
         }
-        json.endArray();
-        json.endObject();
+        json.writeEndArray();
+        json.writeEndObject();
     }
 
-    private void writeUvArray(JsonWriter json) throws IOException {
-        json.name("uv");
-        json.beginObject();
+    private void writeUvArray(JsonGenerator json) throws IOException {
+        json.writeFieldName("uv");
+        json.writeStartObject();
 
-        json.name("type").value("Float32Array");
-        json.name("itemSize").value(2);
-        json.name("normalized").value(false);
+        json.writeStringField("type", "Float32Array");
+        json.writeNumberField("itemSize", 2);
+        json.writeBooleanField("normalized", false);
 
-        json.name("array").beginArray();
+        json.writeFieldName("array");
+        json.writeStartArray();
         int uvSize = size * FI_UV;
         for (int i = 0; i < uvSize; i++) {
             writeRounded(json, uv[i]);
         }
-        json.endArray();
-        json.endObject();
+        json.writeEndArray();
+        json.writeEndObject();
     }
 
-    private void writeAoArray(JsonWriter json) throws IOException {
-        json.name("ao");
-        json.beginObject();
+    private void writeAoArray(JsonGenerator json) throws IOException {
+        json.writeFieldName("ao");
+        json.writeStartObject();
 
-        json.name("type").value("Float32Array");
-        json.name("itemSize").value(1);
-        json.name("normalized").value(false);
+        json.writeStringField("type", "Float32Array");
+        json.writeNumberField("itemSize", 1);
+        json.writeBooleanField("normalized", false);
 
-        json.name("array").beginArray();
+        json.writeFieldName("array");
+        json.writeStartArray();
         int aoSize = size * FI_AO;
         for (int i = 0; i < aoSize; i++) {
             writeRounded(json, ao[i]);
         }
-        json.endArray();
-        json.endObject();
+        json.writeEndArray();
+        json.writeEndObject();
     }
 
-    private void writeBlocklightArray(JsonWriter json) throws IOException {
-        json.name("blocklight");
-        json.beginObject();
+    private void writeBlocklightArray(JsonGenerator json) throws IOException {
+        json.writeFieldName("blocklight");
+        json.writeStartObject();
 
-        json.name("type").value("Float32Array");
-        json.name("itemSize").value(1);
-        json.name("normalized").value(false);
+        json.writeStringField("type", "Float32Array");
+        json.writeNumberField("itemSize", 1);
+        json.writeBooleanField("normalized", false);
 
-        json.name("array").beginArray();
+        json.writeFieldName("array");
+        json.writeStartArray();
         int blSize = size * FI_BLOCKLIGHT;
         for (int i = 0; i < blSize; i++) {
-            json.value(blocklight[i]);
-            json.value(blocklight[i]);
-            json.value(blocklight[i]);
+            json.writeNumber(blocklight[i]);
+            json.writeNumber(blocklight[i]);
+            json.writeNumber(blocklight[i]);
         }
-        json.endArray();
-        json.endObject();
+        json.writeEndArray();
+        json.writeEndObject();
     }
 
-    private void writeSunlightArray(JsonWriter json) throws IOException {
-        json.name("sunlight");
-        json.beginObject();
+    private void writeSunlightArray(JsonGenerator json) throws IOException {
+        json.writeFieldName("sunlight");
+        json.writeStartObject();
 
-        json.name("type").value("Float32Array");
-        json.name("itemSize").value(1);
-        json.name("normalized").value(false);
+        json.writeStringField("type", "Float32Array");
+        json.writeNumberField("itemSize", 1);
+        json.writeBooleanField("normalized", false);
 
-        json.name("array").beginArray();
+        json.writeFieldName("array");
+        json.writeStartArray();
         int blSize = size * FI_SUNLIGHT;
         for (int i = 0; i < blSize; i++) {
-            json.value(sunlight[i]);
-            json.value(sunlight[i]);
-            json.value(sunlight[i]);
+            json.writeNumber(sunlight[i]);
+            json.writeNumber(sunlight[i]);
+            json.writeNumber(sunlight[i]);
         }
-        json.endArray();
-        json.endObject();
+        json.writeEndArray();
+        json.writeEndObject();
     }
 
-    private void writeMaterialGroups(JsonWriter json) throws IOException {
-        json.name("groups").beginArray(); // groups
+    private void writeMaterialGroups(JsonGenerator json) throws IOException {
+        json.writeFieldName("groups");
+        json.writeStartArray(); // groups
 
         if (size > 0) {
-
             int miSize = size * FI_MATERIAL_INDEX, lastMaterial = materialIndex[0], material = lastMaterial, groupStart = 0;
 
-            json.beginObject();
-            json.name("materialIndex").value(material);
-            json.name("start").value(0);
+            json.writeStartObject();
+            json.writeNumberField("materialIndex", material);
+            json.writeNumberField("start", 0);
 
             for (int i = 1; i < miSize; i++) {
                 material = materialIndex[i];
 
                 if (material != lastMaterial) {
-                   json.name("count").value((i - groupStart) * 3L);
-                   json.endObject();
+                   json.writeNumberField("count", (i - groupStart) * 3L);
+                   json.writeEndObject();
 
                    groupStart = i;
 
-                   json.beginObject();
-                   json.name("materialIndex").value(material);
-                   json.name("start").value(groupStart * 3L);
+                   json.writeStartObject();
+                   json.writeNumberField("materialIndex", material);
+                   json.writeNumberField("start", groupStart * 3L);
                 }
 
                 lastMaterial = material;
             }
 
-            json.name("count").value((miSize - groupStart) * 3L);
-            json.endObject();
-
+            json.writeNumberField("count", (miSize - groupStart) * 3L);
+            json.writeEndObject();
         }
 
-        json.endArray(); // groups
+        json.writeEndArray(); // groups
     }
 
-    private void writeRounded(JsonWriter json, double value) throws IOException {
+    private void writeRounded(JsonGenerator json, double value) throws IOException {
         // rounding and remove ".0" to save string space
         double d = Math.round(value * 10000d) / 10000d;
-        if (d == (long) d) json.value((long) d);
-        else json.value(d);
+        if (d == (long) d)
+            json.writeNumber((long) d);
+        else
+            json.writeNumber(d);
     }
 
     public void sort() {

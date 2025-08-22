@@ -56,14 +56,15 @@ repositories {
 
 @Suppress("GradlePackageUpdate")
 dependencies {
+    api ("com.fasterxml.jackson.core:jackson-core:2.19.2")
     api ("com.github.ben-manes.caffeine:caffeine:2.8.5")
-    api ("org.apache.commons:commons-lang3:3.6")
-    api ("commons-io:commons-io:2.5")
+    api ("org.apache.commons:commons-lang3:3.18.0")
+    api ("commons-io:commons-io:2.14.0")
     api ("org.spongepowered:configurate-hocon:4.1.2")
     api ("org.spongepowered:configurate-gson:4.1.2")
     api ("com.github.Querz:NBT:4.0")
     api ("org.apache.commons:commons-dbcp2:2.9.0")
-    api ("io.airlift:aircompressor:0.24")
+    api ("io.airlift:aircompressor:0.27")
 
     api ("de.bluecolored.bluemap.api:BlueMapAPI")
 
